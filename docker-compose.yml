@@ -1,0 +1,9 @@
+services:
+  practice_pg:
+    container_name: practice_pg
+    image: postgres:latest
+    restart: always
+    env_file:
+      - docker.env
+    ports:
+      - '5434:5432'

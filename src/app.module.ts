@@ -3,9 +3,26 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabaseModule } from './database/database.module';
+import * as Joi from '@hapi/joi';
 
 @Module({
-  imports: [ProductModule, OrderModule],
+  imports: [
+    ConfigModule.forRoot({
+      validationSchema: Joi.object({
+        POSTGRES_HOST: Joi.string().required(),
+        POSTGRES_PORT: Joi.number().required(),
+        POSTGRES_USER: Joi.string().required(),
+        POSTGRES_PASSWORD: Joi.string().required(),
+        POSTGRES_DB: Joi.string().required(),
+      }),
+    }),
+    ProductModule,
+    OrderModule,
+    DatabaseModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
