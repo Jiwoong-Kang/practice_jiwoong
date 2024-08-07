@@ -1,4 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Product } from './entities/product.entity';
+import { Repository } from 'typeorm';
+import { CreateProductDto } from './dto/create-product.dto';
 
 @Injectable()
-export class ProductService {}
+export class ProductService {
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+  ) {}
+
+  async getProducts() {
+    const products = await this.productRepository.find();
+    return { count: products.length, data: products };
+  }
+
+  async getProduct(id: string) {
+    const product = await this.productRepository.findOneBy({ id });
+    if (!product) {
+      throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+    }
+    return product;
+  }
+
+  async postProduct(createProductDto: CreateProductDto) {
+    const newProduct = await this.productRepository.create(createProductDto);
+    await this.productRepository.save(newProduct);
+    return newProduct;
+  }
+
+  async deleteProducts() {
+    const deleteResponse = await this.productRepository.delete({});
+    if (!deleteResponse) {
+      throw new HttpException('Something new Error', HttpStatus.NOT_FOUND);
+    }
+    return 'Everything got deleted';
+  }
+
+  async deleteProductById(id: string) {
+    const deleteResponse = await this.productRepository.delete({ id });
+    if (!deleteResponse) {
+      throw new HttpException('Products not found', HttpStatus.NOT_FOUND);
+    }
+    return 'Selected product deleted';
+  }
+
+  async updateProductById(id: string, updateProductDto: CreateProductDto) {
+    await this.productRepository.update(id, updateProductDto);
+    const updateProduct = await this.productRepository.findOneBy({ id });
+    if (!updateProduct) {
+      throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+    }
+    return updateProduct;
+  }
+}
