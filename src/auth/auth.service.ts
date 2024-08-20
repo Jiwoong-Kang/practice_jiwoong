@@ -13,6 +13,7 @@ import { CACHE_MANAGER } from '@nestjs/common/cache';
 import { Cache } from 'cache-manager';
 import { TokenPayload } from './interfaces/tokenPayload.interface';
 import { EmailVerificationDto } from '../user/dto/email-verification.dto';
+import { Provider } from '../common/enums/provider.enum';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,10 @@ export class AuthService {
 
   async signupUser(createUserDto: CreateUserDto) {
     try {
-      return await this.userService.createUser(createUserDto);
+      return await this.userService.createUser({
+        ...createUserDto,
+        provider: Provider.LOCAL,
+      });
     } catch (error) {
       if (error?.code === PostgresErrorCodes.unique_violation) {
         throw new HttpException(
@@ -94,6 +98,7 @@ export class AuthService {
       subject: 'Verification',
       html: signupEmail(generateNumber),
     });
+    return 'Please check your email';
   }
 
   generateOTP() {

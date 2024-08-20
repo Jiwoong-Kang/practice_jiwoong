@@ -8,11 +8,11 @@ services:
     ports:
       - '5434:5432'
 
-  ecommerce_redis:
-    container_name: ecommerce_redis
+  practice_redis:
+    container_name: practice_redis
     image: redis:alpine
     env_file:
       - docker.env
     ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
+      - '6380:6379'
 
