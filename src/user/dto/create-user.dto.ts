@@ -6,7 +6,9 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Provider } from '../../common/enums/provider.enum';
+import { Provider } from '@nestjs/common';
+import { CreateConsentDto } from '@consent/dto/create-consent.dto';
+import { Consent } from '@consent/entities/consent.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -30,4 +32,7 @@ export class CreateUserDto {
 
   @IsString()
   provider?: Provider;
+
+  @ApiProperty({ type: CreateConsentDto })
+  consent?: Consent;
 }

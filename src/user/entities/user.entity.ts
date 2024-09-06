@@ -1,11 +1,13 @@
-import { BaseEntity } from '../../common/base.entity';
-import { BeforeInsert, Column, Entity } from 'typeorm';
+import { BeforeInsert, Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as gravatar from 'gravatar';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Exclude } from 'class-transformer';
-import { Provider } from '../../common/enums/provider.enum';
-import { Role } from '../../common/enums/role.enum';
+
+import { Consent } from '@consent/entities/consent.entity';
+import { BaseEntity } from '@common/base.entity';
+import { Provider } from '@common/enums/provider.enum';
+import { Role } from '@common/enums/role.enum';
 
 @Entity()
 export class User extends BaseEntity {
@@ -37,6 +39,12 @@ export class User extends BaseEntity {
   @Exclude()
   public roles: Role[];
 
+  @OneToOne(() => Consent, {
+    eager: true,
+    cascade: true,
+  })
+  @JoinColumn()
+  public consent: Consent;
   @BeforeInsert()
   async beforeSaveFunction() {
     try {
