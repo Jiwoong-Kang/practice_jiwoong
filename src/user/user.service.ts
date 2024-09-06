@@ -55,4 +55,8 @@ export class UserService {
     });
     return 'Updated password';
   }
+
+  async getAllUsers() {
+    return await this.userRepository.find();
+  }
 }
