@@ -6,19 +6,26 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { PageOptionsDto } from '@common/dtos/page-options.dto';
+import { PageDto } from '@common/dtos/page.dto';
+import { Product } from '@product/entities/product.entity';
 
+@ApiBearerAuth()
 @ApiTags('Product')
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get('/all')
-  async getAllProducts() {
-    return await this.productService.getProducts();
+  async getAllProducts(
+    @Query() pageOptionsDto: PageOptionsDto,
+  ): Promise<PageDto<Product>> {
+    return await this.productService.getProducts(pageOptionsDto);
   }
 
   @Get('/:id')

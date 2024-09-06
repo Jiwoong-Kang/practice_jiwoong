@@ -8,6 +8,9 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { PageOptionsDto } from '@common/dtos/page-options.dto';
+import { PageDto } from '@common/dtos/page.dto';
+import { PageMetaDto } from '@common/dtos/page-meta.dto';
 
 @ApiBearerAuth()
 @Injectable()
@@ -56,7 +59,15 @@ export class UserService {
     return 'Updated password';
   }
 
-  async getAllUsers() {
-    return await this.userRepository.find();
+  async getAllUsers(pageOptionsDto: PageOptionsDto): Promise<PageDto<User>> {
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+    queryBuilder
+      .orderBy('user.createdAt', pageOptionsDto.order)
+      .skip(pageOptionsDto.skip)
+      .take(pageOptionsDto.take);
+    const itemCount = await queryBuilder.getCount();
+    const { entities } = await queryBuilder.getRawAndEntities();
+    const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
+    return new PageDto(entities, pageMetaDto);
   }
 }
