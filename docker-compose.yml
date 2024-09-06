@@ -16,3 +16,12 @@ services:
     ports:
       - '6380:6379'
 
+  practice_minio:
+    image: docker.io/bitnami/minio:2022
+    env_file:
+      - docker.env
+    ports:
+      - "9000:9000"
+      - "9002:9002"
+    platform: linux/amd64
+

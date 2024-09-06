@@ -25,6 +25,9 @@ export class ProfileController {
     @Req() req: RequestWithUser,
     @Body() createProfileDto: CreateProfileDto,
   ) {
-    return await this.profileService.updateProfile(req.user, createProfileDto);
+    return await this.profileService.updateProfileByUser(
+      req.user,
+      createProfileDto,
+    );
   }
 }
