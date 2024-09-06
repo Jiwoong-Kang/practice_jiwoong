@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MinioService } from 'nestjs-minio-client';
+import { ConfigService } from '@nestjs/config';
 import { User } from '@user/entities/user.entity';
-import { BufferedFile } from '@minio-client/file.model';
-import * as crypto from 'node:crypto';
+import { BufferedFile } from '@root/minio-client/file.model';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class MinioClientService {
@@ -15,8 +15,8 @@ export class MinioClientService {
   }
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly minio: MinioService,
+    private readonly configService: ConfigService,
   ) {
     this.logger = new Logger('MinioStorageService');
     this.baseBucket = this.configService.get('MINIO_BUCKET');
@@ -35,13 +35,13 @@ export class MinioClientService {
       );
     }
 
-    const temp_filename = Date.now.toString();
+    const temp_filename = Date.now().toString();
     const hashedFileName = crypto
       .createHash('md5')
       .update(temp_filename)
       .digest('hex');
 
-    const ext = file.originalname.substring(
+    const ext = file.originalName.substring(
       file.originalName.lastIndexOf('.'),
       file.originalName.length,
     );
@@ -55,6 +55,7 @@ export class MinioClientService {
     const fileBuffer = file.buffer;
     const filePath = `${categoryName}/${user.id}/${filename}`;
 
+    // 같은 이름이 존재할 시 삭제 로직
     if (`${categoryName}/${user.id}`.includes(user.id)) {
       await this.deleteFolderContents(
         this.baseBucket,
@@ -62,6 +63,7 @@ export class MinioClientService {
       );
     }
 
+    // 파일 첨부
     this.client.putObject(
       baseBucket,
       filePath,
@@ -69,7 +71,7 @@ export class MinioClientService {
       fileBuffer.length,
       metaData,
       function (err) {
-        console.log('================', err);
+        console.log('=======================', err);
         if (err) {
           throw new HttpException(
             'Error uploading processing error',
@@ -93,15 +95,16 @@ export class MinioClientService {
         HttpStatus.BAD_REQUEST,
       );
     }
+
     const temp_filename = Date.now().toString();
     const hashedFileName = crypto
       .createHash('md5')
       .update(temp_filename)
       .digest('hex');
 
-    const ext = file.originalname.substring(
-      file.originalname.lastIndexOf('.'),
-      file.originalname.length,
+    const ext = file.originalName.substring(
+      file.originalName.lastIndexOf('.'),
+      file.originalName.length,
     );
 
     const metaData = {
@@ -151,9 +154,9 @@ export class MinioClientService {
       .update(temp_filename)
       .digest('hex');
 
-    const ext = file.originalname.substring(
-      file.originalname.lastIndexOf('.'),
-      file.originalname.length,
+    const ext = file.originalName.substring(
+      file.originalName.lastIndexOf('.'),
+      file.originalName.length,
     );
 
     const metaData = {
@@ -205,7 +208,7 @@ export class MinioClientService {
       );
       console.log('Deleted objects', deleteResult);
     } else {
-      console.log('Not found objects');
+      console.log('No objects found to delete');
     }
   }
 }

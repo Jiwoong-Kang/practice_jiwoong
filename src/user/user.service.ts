@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -7,12 +12,12 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { PageOptionsDto } from '@common/dtos/page-options.dto';
 import { PageDto } from '@common/dtos/page.dto';
 import { PageMetaDto } from '@common/dtos/page-meta.dto';
+import { BufferedFile } from '@root/minio-client/file.model';
+import { MinioClientService } from '@root/minio-client/minio-client.service';
 
-@ApiBearerAuth()
 @Injectable()
 export class UserService {
   constructor(
@@ -20,6 +25,7 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly minioClientService: MinioClientService,
   ) {}
 
   // id 기반으로 유저를 찾는 로직
@@ -34,10 +40,8 @@ export class UserService {
   // email 기반으로 유저를 찾는 로직
   async getUserByEmail(email: string) {
     const user = await this.userRepository.findOneBy({ email });
-    if (!user) {
-      throw new NotFoundException('User does not exist');
-    }
-    return user;
+    if (user) return user;
+    throw new HttpException('User does not exist', HttpStatus.NOT_FOUND);
   }
 
   // 유저를 등록하는 로직
@@ -59,7 +63,9 @@ export class UserService {
     return 'Updated password';
   }
 
+  //전제 유저를 가져오는 로직
   async getAllUsers(pageOptionsDto: PageOptionsDto): Promise<PageDto<User>> {
+    // return await this.userRepository.find();
     const queryBuilder = this.userRepository.createQueryBuilder('user');
     queryBuilder
       .orderBy('user.createdAt', pageOptionsDto.order)
@@ -69,5 +75,22 @@ export class UserService {
     const { entities } = await queryBuilder.getRawAndEntities();
     const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
     return new PageDto(entities, pageMetaDto);
+  }
+
+  async updateUserInfoByToken(
+    user: User,
+    image?: BufferedFile,
+    updateUserDto?: CreateUserDto,
+  ) {
+    const profileImg = await this.minioClientService.uploadProfileImg(
+      user,
+      image,
+      'Profile',
+    );
+
+    return await this.userRepository.update(user.id, {
+      ...updateUserDto,
+      profileImg,
+    });
   }
 }
