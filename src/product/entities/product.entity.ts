@@ -9,8 +9,8 @@ export class Product extends BaseEntity {
   @Column()
   public description: string;
 
-  @Column()
-  public productImg: string;
+  @Column({ nullable: true })
+  public productImg?: string;
 
   @Column()
   public price: number;
@@ -20,4 +20,7 @@ export class Product extends BaseEntity {
 
   @Column({ default: true })
   public isSale: boolean;
+
+  @Column({ nullable: true })
+  public category: string;
 }

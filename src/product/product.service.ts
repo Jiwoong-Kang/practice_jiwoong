@@ -6,12 +6,15 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { PageOptionsDto } from '@common/dtos/page-options.dto';
 import { PageDto } from '@common/dtos/page.dto';
 import { PageMetaDto } from '@common/dtos/page-meta.dto';
+import { BufferedFile } from '@minio-client/file.model';
+import { MinioClientService } from '@minio-client/minio-client.service';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly minioClientService: MinioClientService,
   ) {}
 
   async getProducts(pageOptionsDto: PageOptionsDto): Promise<PageDto<Product>> {
@@ -37,8 +40,16 @@ export class ProductService {
     return product;
   }
 
-  async postProduct(createProductDto: CreateProductDto) {
-    const newProduct = await this.productRepository.create(createProductDto);
+  async postProduct(image?: BufferedFile, createProductDto?: CreateProductDto) {
+    const productImg = await this.minioClientService.createProductImg(
+      image,
+      'product',
+      createProductDto.category,
+    );
+    const newProduct = await this.productRepository.create({
+      productImg,
+      ...createProductDto,
+    });
     await this.productRepository.save(newProduct);
     return newProduct;
   }
@@ -59,12 +70,24 @@ export class ProductService {
     return 'Selected product deleted';
   }
 
-  async updateProductById(id: string, updateProductDto: CreateProductDto) {
-    await this.productRepository.update(id, updateProductDto);
-    const updateProduct = await this.productRepository.findOneBy({ id });
-    if (!updateProduct) {
-      throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+  async updateProductById(
+    id: string,
+    image?: BufferedFile,
+    updateProductDto?: CreateProductDto,
+  ) {
+    const productImg = await this.minioClientService.uploadProductImg(
+      id,
+      image,
+      'Product',
+    );
+    await this.productRepository.update(id, {
+      ...updateProductDto,
+      productImg,
+    });
+    const updatedProduct = await this.productRepository.findOneBy({ id });
+    if (updatedProduct) {
+      return updatedProduct;
     }
-    return updateProduct;
+    throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
   }
 }
